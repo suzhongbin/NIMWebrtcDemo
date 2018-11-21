@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>wangyi</title>
+    <style>
+        *{margin:0;padding:0;}
+        .box{width:100%; height:100%;position:fixed;display: flex;}
+        .box>div:nth-child(1){flex: 2.5;display: flex;flex-direction: column;}
+        .box>div:nth-child(2){flex: 1;display: flex;flex-direction: column;}
+        .box>div:nth-child(1)>div:nth-child(1){flex: 8;background-color: #ccc;}
+        .box>div:nth-child(1)>div:nth-child(2){flex: 1;background-color: white;line-height: 80px;text-indent: 20px;}
+        #container1{flex: 0.7;background-color: black;color:white;}
+        #remoteContainer1{flex: 1;background-color:#063;color:white;}
+        #msg{width:500px;height: 30px;text-indent: 20px;}
+        #sessionid{width:500px;height: 30px;text-indent: 20px;}
+        #callee{width:500px;height: 30px;text-indent: 20px;}
+        #sendmsg{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        #call{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        #response{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        #hangup{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        #isonline{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+
+    </style>
+    <script></script>
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/NIM_Web_NIM_v5.8.0.js"></script>
+    <script src="../js/NIM_Web_WebRTC_v5.8.0.js"></script>
+    <script src="../js/md5.js"></script>
+    <script src="../js/util.js"></script>
+</head>
+
+<body>
+    <div class="box">
+        <div>
+            <div id="chatroom">聊天内容容器</div>
+            <div>
+                <input type="text" value="" id="msg" placeholder="消息内容">
+                <input type="text" value="" placeholder="发送对象" id="sessionid">
+                <button id="sendmsg">发送消息</button>
+            </div>
+            <div id="netcall">音视频</div>
+            <div>
+                <input type="text" value="" id="callee"> <button id="call">呼叫</button>
+                <button id="response">接听</button>
+                <button id="hangup">挂断</button>
+            </div>
+        </div>
+        <div>
+            <div id="container1">本地视频画面</div>
+            <div id="remoteContainer1">对方视频画面</div>
+        </div>
+    </div>
+
+
+    <script>
+        // 被叫信息
+        let beCalledInfo = null;
+        // 是否被叫中
+        let beCalling = false;
+        // 呼叫类型
+        let type = null;
+        // 是否正忙
+        let busy = false;
+        var sdktoken = readCookie('token'),
+            userUID = readCookie('uid'),
+            that = this;
+        if (!sdktoken) {
+            window.location.href = './login.html';
+            //return;
+        }
+        var data = {};
+        var nim = NIM.getInstance({
+            debug: true,
+            appKey: '45c6af3c98409b18a84451215d0bdd6e',
+            account: userUID,
+            token: sdktoken,
+            db: false,//不使用数据库
+            onconnect: onConnect,
+            onerror: onError,
+            onwillreconnect: onWillReconnect,
+            ondisconnect: onDisconnect,
+            // 多端登录
+            onloginportschange: onLoginPortsChange,
+            // 用户关系
+            onblacklist: onBlacklist,
+            onsyncmarkinblacklist: onMarkInBlacklist,
+            onmutelist: onMutelist,
+            onsyncmarkinmutelist: onMarkInMutelist,
+            // 好友关系
+            onfriends: onFriends,
+            onsyncfriendaction: onSyncFriendAction,
+            // 用户名片
+            onmyinfo: onMyInfo,
+            onupdatemyinfo: onUpdateMyInfo,
+            onusers: onUsers,
+            onupdateuser: onUpdateUser,
+            // 机器人列表的回调
+            onrobots: onRobots,
+            // 群组
+            onteams: onTeams,
+            onsynccreateteam: onCreateTeam,
+            onUpdateTeam: onUpdateTeam,
+            //onteammembers: onTeamMembers,
+            // onsyncteammembersdone: onSyncTeamMembersDone,
+            onupdateteammember: onUpdateTeamMember,
+            // 群消息业务已读通知
+            onTeamMsgReceipt: onTeamMsgReceipt,
+            // 会话
+            onsessions: onSessions,
+            onupdatesession: onUpdateSession,
+            // 消息
+            onroamingmsgs: onRoamingMsgs,
+            onofflinemsgs: onOfflineMsgs,
+            onmsg: onMsg,
+            // 系统通知
+            onofflinesysmsgs: onOfflineSysMsgs,
+            onsysmsg: onSysMsg,
+            onupdatesysmsg: onUpdateSysMsg,
+            onsysmsgunread: onSysMsgUnread,
+            onupdatesysmsgunread: onUpdateSysMsgUnread,
+            onofflinecustomsysmsgs: onOfflineCustomSysMsgs,
+            oncustomsysmsg: onCustomSysMsg,
+            // 收到广播消息
+            onbroadcastmsg: onBroadcastMsg,
+            onbroadcastmsgs: onBroadcastMsgs,
+            // 同步完成
+            onsyncdone: onSyncDone,
+            //订阅事件
+            //onpushevents: onPushEvents,
+            syncSessionUnread: true
+        });
+
+        function onConnect() {
+            console.log('连接成功');
+
+            NIM.use(WebRTC);
+            Netcall = WebRTC;
+            netcall = Netcall.getInstance({
+                debug: true,
+                nim: window.nim,
+                mirror: false,
+                mirrorRemote: false,
+                container: document.getElementById('container1'),
+                remoteContainer: document.getElementById("remoteContainer1")
+            })
+            netcall.on('devices', function (obj) {
+                console.log('on devices', obj)
+            })
+
+            // 开启监听
+            netcall.on('beCalling', function (obj) {
+                console.log('on beCalling', obj);
+
+                const channelId = obj.channelId;
+                // 被叫回应主叫自己已经收到了通话请求
+                netcall.control({
+                    channelId: channelId,
+                    command: WebRTC.NETCALL_CONTROL_COMMAND_START_NOTIFY_RECEIVED
+                });
+                // 只有在没有通话并且没有被叫的时候才记录被叫信息, 否则通知对方忙并拒绝通话
+                if (!netcall.calling && !beCalling) {
+                    type = obj.type;
+                    beCalling = true;
+                    beCalledInfo = obj;
+                    alert("收到" + obj.account + "的呼叫");
+                } else {
+                    if (netcall.calling) {
+                        busy = netcall.notCurrentChannelId(obj);
+                    } else if (beCalling) {
+                        busy = beCalledInfo.channelId !== channelId;
+                    }
+                    if (busy) {
+                        netcall.control({
+                            channelId: channelId,
+                            command: WebRTC.NETCALL_CONTROL_COMMAND_BUSY
+                        });
+                        // 拒绝通话
+                        netcall.response({
+                            accepted: false,
+                            beCalledInfo: obj
+                        });
+                    }
+                }
+            });
+            //通话建立成功回调
+            netcall.on('callAccepted', function (obj) {
+                type = obj.type;
+                console.log('on callAccepted', obj);
+                netcall.startRtc().then(function () {
+                    netcall.startDevice({
+                        type: Netcall.DEVICE_TYPE_VIDEO,
+                        width: 640,
+                        height: 480,
+                        //device: device
+                    }).then(function () {
+                        console.log('启动摄像头成功，可以进行预览啦')
+                        //通知摄像头打开
+                        var param = {
+                            channelId: netcall.channelId,
+                            command: Netcall.NETCALL_CONTROL_COMMAND_NOTIFY_VIDEO_ON
+                        }
+                        netcall.control(param)
+                        //开启本地视频预览
+                        var node = document.getElementById('container1')
+                        netcall.startLocalStream(node)
+                        // 设置本地预览画面大小
+                        netcall.setVideoViewSize({
+                            width: 500,
+                            height: 500,
+                            cut: true
+                        })
+                    }).catch(function (err) {
+                        console.log('启动摄像头失败', err)
+                    })
+                    // 开启麦克风
+                    netcall.startDevice({
+                        type: Netcall.DEVICE_TYPE_AUDIO_IN,
+                        //device: device
+                    }).then(function () {
+                        console.log('启动麦克风成功')
+                        //通知麦克风打开
+                        var param = {
+                            channelId: netcall.channelId,
+                            command: Netcall.NETCALL_CONTROL_COMMAND_NOTIFY_AUDIO_ON
+                        }
+                        netcall.control(param)
+                        // 设置采集音量
+                        netcall.setCaptureVolume(255)
+                    }).catch(function (err) {
+                        console.log('启动麦克风失败', err)
+                    })
+                })
+                    .catch(function (err) {
+                        console.log('发生错误')
+                        console.log(err)
+                        netcall.hangup()
+                    })
+            });
+            //收到远端数据回调
+            netcall.on('remoteTrack', function (obj) {
+                console.log('user join', obj)
+                // 播放对方声音
+                netcall.startDevice({
+                    type: Netcall.DEVICE_TYPE_AUDIO_OUT_CHAT
+                }).catch(function (err) {
+                    console.log('播放对方的声音失败')
+                    console.error(err)
+                })
+                // 预览对方视频画面
+                netcall.setPlayVolume(0)
+                netcall.startRemoteStream({
+                    account: obj.account,
+                    node: document.getElementById('remoteContainer1')
+                })
+                // 设置对方预览画面大小
+                netcall.setVideoViewRemoteSize({
+                    account: obj.account,
+                    width: 500,
+                    height: 500,
+                    cut: true
+                })
+            })
+            netcall.on('hangup', function (obj) {
+                console.log('on hangup', obj);
+                // 判断需要挂断的通话是否是当前正在进行中的通话
+                if (!beCalledInfo || beCalledInfo.channelId === obj.channelId) {
+                    // 清理工作
+                    resetWhenHangup();
+                }
+            });
+        }
+        function onWillReconnect(obj) {
+            // 此时说明 `SDK` 已经断开连接, 请开发者在界面上提示用户连接已断开, 而且正在重新建立连接
+            console.log('即将重连');
+            console.log(obj.retryCount);
+            console.log(obj.duration);
+        }
+        function onDisconnect(error) {
+            // 此时说明 `SDK` 处于断开状态, 开发者此时应该根据错误码提示相应的错误信息, 并且跳转到登录页面
+            console.log('丢失连接');
+            console.log(error);
+            if (error) {
+                switch (error.code) {
+                    // 账号或者密码错误, 请跳转到登录页面并提示错误
+                    case 302:
+                        alert("账号或者密码错误，请返回登录页面");
+                        break;
+                    // 被踢, 请提示错误后跳转到登录页面
+                    case 'kicked':
+                        alert("被踢");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        function onError(error) {
+            console.log(error);
+        }
+
+        function onLoginPortsChange(loginPorts) {
+            console.log('当前登录帐号在其它端的状态发生改变了', loginPorts);
+        }
+
+        function onBlacklist(blacklist) {
+            console.log('收到黑名单', blacklist);
+            data.blacklist = nim.mergeRelations(data.blacklist, blacklist);
+            data.blacklist = nim.cutRelations(data.blacklist, blacklist.invalid);
+            refreshBlacklistUI();
+        }
+        function onMarkInBlacklist(obj) {
+            console.log(obj);
+            console.log(obj.account + '被你在其它端' + (obj.isAdd ? '加入' : '移除') + '黑名单');
+            if (obj.isAdd) {
+                addToBlacklist(obj);
+            } else {
+                removeFromBlacklist(obj);
+            }
+        }
+        function addToBlacklist(obj) {
+            data.blacklist = nim.mergeRelations(data.blacklist, obj.record);
+            refreshBlacklistUI();
+        }
+        function removeFromBlacklist(obj) {
+            data.blacklist = nim.cutRelations(data.blacklist, obj.record);
+            refreshBlacklistUI();
+        }
+        function refreshBlacklistUI() {
+            // 刷新界面
+        }
+        function onMutelist(mutelist) {
+            console.log('收到静音列表', mutelist);
+            data.mutelist = nim.mergeRelations(data.mutelist, mutelist);
+            data.mutelist = nim.cutRelations(data.mutelist, mutelist.invalid);
+            refreshMutelistUI();
+        }
+        function onMarkInMutelist(obj) {
+            console.log(obj);
+            console.log(obj.account + '被你' + (obj.isAdd ? '加入' : '移除') + '静音列表');
+            if (obj.isAdd) {
+                addToMutelist(obj);
+            } else {
+                removeFromMutelist(obj);
+            }
+        }
+        function addToMutelist(obj) {
+            data.mutelist = nim.mergeRelations(data.mutelist, obj.record);
+            refreshMutelistUI();
+        }
+        function removeFromMutelist(obj) {
+            data.mutelist = nim.cutRelations(data.mutelist, obj.record);
+            refreshMutelistUI();
+        }
+        function refreshMutelistUI() {
+            // 刷新界面
+        }
+
+        function onFriends(friends) {
+            console.log('收到好友列表', friends);
+            data.friends = nim.mergeFriends(data.friends, friends);
+            data.friends = nim.cutFriends(data.friends, friends.invalid);
+            refreshFriendsUI();
+        }
+        function onSyncFriendAction(obj) {
+            console.log(obj);
+            switch (obj.type) {
+                case 'addFriend':
+                    console.log('你在其它端直接加了一个好友' + obj.account + ', 附言' + obj.ps);
+                    onAddFriend(obj.friend);
+                    break;
+                case 'applyFriend':
+                    console.log('你在其它端申请加了一个好友' + obj.account + ', 附言' + obj.ps);
+                    break;
+                case 'passFriendApply':
+                    console.log('你在其它端通过了一个好友申请' + obj.account + ', 附言' + obj.ps);
+                    onAddFriend(obj.friend);
+                    break;
+                case 'rejectFriendApply':
+                    console.log('你在其它端拒绝了一个好友申请' + obj.account + ', 附言' + obj.ps);
+                    break;
+                case 'deleteFriend':
+                    console.log('你在其它端删了一个好友' + obj.account);
+                    onDeleteFriend(obj.account);
+                    break;
+                case 'updateFriend':
+                    console.log('你在其它端更新了一个好友', obj.friend);
+                    onUpdateFriend(obj.friend);
+                    break;
+            }
+        }
+        function onAddFriend(friend) {
+            data.friends = nim.mergeFriends(data.friends, friend);
+            refreshFriendsUI();
+        }
+        function onDeleteFriend(account) {
+            data.friends = nim.cutFriendsByAccounts(data.friends, account);
+            refreshFriendsUI();
+        }
+        function onUpdateFriend(friend) {
+            data.friends = nim.mergeFriends(data.friends, friend);
+            refreshFriendsUI();
+        }
+        function refreshFriendsUI() {
+            // 刷新界面
+        }
+
+        function onMyInfo(user) {
+            console.log('收到我的名片', user);
+            data.myInfo = user;
+            updateMyInfoUI();
+        }
+        function onUpdateMyInfo(user) {
+            console.log('我的名片更新了', user);
+            data.myInfo = NIM.util.merge(data.myInfo, user);
+            updateMyInfoUI();
+        }
+        function updateMyInfoUI() {
+            // 刷新界面
+        }
+        function onUsers(users) {
+            console.log('收到用户名片列表', users);
+            data.users = nim.mergeUsers(data.users, users);
+        }
+        function onUpdateUser(user) {
+            console.log('用户名片更新了', user);
+            data.users = nim.mergeUsers(data.users, user);
+        }
+        function onRobots(robots) {
+            // 客户私有化方案不支持
+            console.log('收到机器人列表', robots);
+            data.robots = robots;
+        }
+        function onTeams(teams) {
+            console.log('群列表', teams);
+            data.teams = nim.mergeTeams(data.teams, teams);
+            onInvalidTeams(teams.invalid);
+        }
+        function onInvalidTeams(teams) {
+            data.teams = nim.cutTeams(data.teams, teams);
+            data.invalidTeams = nim.mergeTeams(data.invalidTeams, teams);
+            refreshTeamsUI();
+        }
+        function onCreateTeam(team) {
+            console.log('你创建了一个群', team);
+            data.teams = nim.mergeTeams(data.teams, team);
+            refreshTeamsUI();
+            onTeamMembers({
+                teamId: team.teamId,
+                members: owner
+            });
+        }
+        function refreshTeamsUI() {
+            // 刷新界面
+        }
+        function onTeamMembers(teamId, members) {
+            console.log('群id', teamId, '群成员', members);
+            var teamId = obj.teamId;
+            var members = obj.members;
+            data.teamMembers = data.teamMembers || {};
+            data.teamMembers[teamId] = nim.mergeTeamMembers(data.teamMembers[teamId], members);
+            data.teamMembers[teamId] = nim.cutTeamMembers(data.teamMembers[teamId], members.invalid);
+            refreshTeamMembersUI();
+        }
+        // function onSyncTeamMembersDone() {
+        //     console.log('同步群列表完成');
+        // }
+        function onUpdateTeam(team) {
+            console.log('群状态更新', team)
+        }
+        function onUpdateTeamMember(teamMember) {
+            console.log('群成员信息更新了', teamMember);
+            onTeamMembers({
+                teamId: teamMember.teamId,
+                members: teamMember
+            });
+        }
+        function refreshTeamMembersUI() {
+            // 刷新界面
+        }
+        function onTeamMsgReceipt(teamMsgReceipts) {
+            console.log('群消息已读通知', teamMsgReceipts)
+        }
+
+        function onSessions(sessions) {
+            console.log('收到会话列表', sessions);
+            data.sessions = nim.mergeSessions(data.sessions, sessions);
+            updateSessionsUI();
+        }
+        function onUpdateSession(session) {
+            console.log('会话更新了', session);
+            data.sessions = nim.mergeSessions(data.sessions, session);
+            updateSessionsUI();
+        }
+        function updateSessionsUI() {
+            // 刷新界面
+        }
+
+        function onRoamingMsgs(obj) {
+            console.log('漫游消息', obj);
+            pushMsg(obj.msgs);
+        }
+        function onOfflineMsgs(obj) {
+            console.log('离线消息', obj);
+            pushMsg(obj.msgs);
+        }
+        function onMsg(msg) {
+            console.log('收到消息', msg.scene, msg.type, msg);
+            pushMsg(msg);
+            if (msg.type == "text") {
+                alert("收到" + msg.type + "消息" + msg.text);
+            } else if (msg.type == "file") {
+                alert("收到" + msg.type + "消息" + msg.file.url);
+            }
+        }
+        function onBroadcastMsg(msg) {
+            console.log('收到广播消息', msg);
+        }
+        function onBroadcastMsgs(msgs) {
+            console.log('收到广播消息列表', msgs);
+        }
+        function pushMsg(msgs) {
+            if (!Array.isArray(msgs)) { msgs = [msgs]; }
+            var sessionId = msgs[0].sessionId;
+            data.msgs = data.msgs || {};
+            data.msgs[sessionId] = nim.mergeMsgs(data.msgs[sessionId], msgs);
+        }
+
+        function onOfflineSysMsgs(sysMsgs) {
+            console.log('收到离线系统通知', sysMsgs);
+            pushSysMsgs(sysMsgs);
+        }
+        function onSysMsg(sysMsg) {
+            console.log('收到系统通知', sysMsg)
+            pushSysMsgs(sysMsg);
+        }
+        function onUpdateSysMsg(sysMsg) {
+            pushSysMsgs(sysMsg);
+        }
+        function pushSysMsgs(sysMsgs) {
+            data.sysMsgs = nim.mergeSysMsgs(data.sysMsgs, sysMsgs);
+            refreshSysMsgsUI();
+        }
+        function onSysMsgUnread(obj) {
+            console.log('收到系统通知未读数', obj);
+            data.sysMsgUnread = obj;
+            refreshSysMsgsUI();
+        }
+        function onUpdateSysMsgUnread(obj) {
+            console.log('系统通知未读数更新了', obj);
+            data.sysMsgUnread = obj;
+            refreshSysMsgsUI();
+        }
+        function refreshSysMsgsUI() {
+            // 刷新界面
+        }
+        function onOfflineCustomSysMsgs(sysMsgs) {
+            console.log('收到离线自定义系统通知', sysMsgs);
+        }
+        function onCustomSysMsg(sysMsg) {
+            console.log('收到自定义系统通知', sysMsg);
+        }
+
+        function onSyncDone() {
+            console.log('同步完成');
+        }
+        //呼叫
+        $("#call").on('click', function () {
+            callee = $.trim($("#callee").val())
+            const pushConfig = {//设置呼叫推送参数
+                enable: true,//是否开启推送
+                needBadge: true,//是否需要推送角标
+                needPushNick: true,//是否需要推送昵称
+                pushContent: '',//自定义推送内容
+                custom: '测试自定义数据',//自定义呼叫拓展数据
+                pushPayload: '',//推送拓展字段
+                sound: '',//推送铃声设置
+                forceKeepCalling: 0//是否启用持续呼叫
+            };
+            const sessionConfig = {//通话参数定义
+                videoQuality: Netcall.CHAT_VIDEO_QUALITY_HIGH,//通话发送分辨率
+                videoFrameRate: Netcall.CHAT_VIDEO_FRAME_RATE_15,//通话发送帧率
+                videoBitrate: 0,//通话发送视频码率，0为默认由sdk定义
+                recordVideo: false,//是否开启服务端视频录制
+                recordAudio: false,//是否开启服务端音频录制
+                highAudio: false,//是否使用高清语音
+            };
+            netcall
+                .call({//呼叫
+                    type: Netcall.NETCALL_TYPE_VIDEO,//通话类型
+                    account: callee,//对方id
+                    pushConfig: pushConfig,
+                    sessionConfig: sessionConfig,
+                    webrtcEnable: true
+                })
+                .then(function (obj) {
+                    // 成功发起呼叫
+                    console.log('call success', obj);
+                })
+                .catch(function (err) {
+                    // 被叫不在线
+                    if (err.event.code === 11001) {
+                        console.log('callee offline', err);
+                    }
+                });
+        })
+        //接听
+        $("#response").on('click', function () {
+            const sessionConfig = {//设置通话参数，同呼叫
+                videoQuality: Netcall.CHAT_VIDEO_QUALITY_HIGH,
+                videoFrameRate: Netcall.CHAT_VIDEO_FRAME_RATE_15,
+                videoBitrate: 0,
+                recordVideo: false,
+                recordAudio: false,
+                highAudio: false,
+            };
+            netcall
+                .response({
+                    accepted: true,//接听或拒绝
+                    beCalledInfo: beCalledInfo,//接听的呼叫信息，从beCalling收到呼叫回调中获取
+                    sessionConfig: sessionConfig
+                })
+                .catch(function (err) {
+                    reject();
+                    console.log('接听失败', err);
+                });
+        })
+        //挂断
+        $("#hangup").on('click', function () {
+            netcall.hangup();
+            // 是否被叫中
+            beCalling = false;
+            // 呼叫类型
+            type = null;
+            // 是否正忙
+            busy = false;
+            // 被叫信息
+            beCalledInfo = null;
+        })
+        function resetWhenHangup() {
+            // 被叫信息
+            beCalledInfo = null;
+            // 是否被叫中
+            beCalling = false;
+            // 呼叫类型
+            type = null;
+            // 是否正忙
+            busy = false;
+        }
+
+        //发送文本消息
+        $("#sendmsg").on('click', function () {
+            toaccid = $("#sessionid").val().trim();
+            message = $("#msg").val().trim();
+            var msg = nim.sendText({
+                scene: 'p2p',
+                to: toaccid,
+                text: message,
+                done: sendMsgDone
+            });
+            console.log('正在发送p2p text消息, id=' + msg.idClient);
+            pushMsg(msg);
+            function sendMsgDone(error, msg) {
+                console.log(error);
+                console.log(msg);
+                console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
+                pushMsg(msg);
+            }
+        })
+
+    </script>
+</body>
+
+</html>

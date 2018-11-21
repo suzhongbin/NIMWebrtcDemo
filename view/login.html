@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        *{margin:0;padding:0;}
+        body{background-color: rgba(0,0,0,.5)}
+        .box{width:300px;height: 150px;background-color: white;position: fixed;overflow: hidden;display: flex;
+             left: 50%;margin-left: -150px;top:50%;margin-top: -75px;border-radius: 10px;flex-direction: column;}
+        .box>div{flex: 1;text-align: center;line-height: 50px;color:#197ED8;font-size: 12px;}
+        input{width:200px;height: 25px;text-indent: 20px;}
+        button{width:100px;height: 30px;border:none;background-color: #197ED8;color:white;border-radius: 20px;
+               outline: none;cursor: pointer;}
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <div>账号 <input type="text" id="account" value=""></div>
+    <div>密码 <input type="text" id="token" value=""></div>
+    <div><button id="login">登陆</button></div>
+</div>
+<script src="../js/jquery-1.11.3.min.js"></script>
+<script src="../js/md5.js"></script>
+<script src="../js/util.js"></script>
+<script>
+    function connectSDK () {
+        accout = $.trim($("#account").val()),
+        //uid = account.toLocaleLowerCase(),
+        pwd = $("#token").val(),
+        password = MD5(pwd);
+        setCookie('uid', accout);
+        setCookie('token', password);
+        window.location.href='index.html'
+    }
+
+    $("#login").click(function(){
+        connectSDK();
+    })
+</script>
+</body>
+</html>
