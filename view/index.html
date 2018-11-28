@@ -20,7 +20,7 @@
         #call{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
         #response{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
         #hangup{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
-        #isonline{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        #reject{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
 
     </style>
     <script></script>
@@ -44,7 +44,10 @@
             <div>
                 <input type="text" value="" id="callee"> <button id="call">呼叫</button>
                 <button id="response">接听</button>
+                <button id="reject">拒绝</button>
                 <button id="hangup">挂断</button>
+                <!-- <button id="connect">连接</button> -->
+                <!-- <button id="disconnect">断开连接</button> -->
             </div>
         </div>
         <div>
@@ -140,8 +143,6 @@
             netcall = Netcall.getInstance({
                 debug: true,
                 nim: window.nim,
-                mirror: false,
-                mirrorRemote: false,
                 container: document.getElementById('container1'),
                 remoteContainer: document.getElementById("remoteContainer1")
             })
@@ -191,12 +192,9 @@
                 netcall.startRtc().then(function () {
                     netcall.startDevice({
                         type: Netcall.DEVICE_TYPE_VIDEO,
-                        width: 640,
-                        height: 480,
-                        //device: device
                     }).then(function () {
                         console.log('启动摄像头成功，可以进行预览啦')
-                        //通知摄像头打开
+                        //通知对方摄像头打开
                         var param = {
                             channelId: netcall.channelId,
                             command: Netcall.NETCALL_CONTROL_COMMAND_NOTIFY_VIDEO_ON
@@ -220,7 +218,7 @@
                         //device: device
                     }).then(function () {
                         console.log('启动麦克风成功')
-                        //通知麦克风打开
+                        //通知对方麦克风打开
                         var param = {
                             channelId: netcall.channelId,
                             command: Netcall.NETCALL_CONTROL_COMMAND_NOTIFY_AUDIO_ON
@@ -626,6 +624,29 @@
                     console.log('接听失败', err);
                 });
         })
+        //拒绝
+        $("#reject").on('click', function () {
+            netcall.control({
+                channelId: beCalledInfo.channelId,
+                command: WebRTC.NETCALL_CONTROL_COMMAND_BUSY
+            });
+            netcall.response({
+                accepted: false,
+                beCalledInfo
+            });
+            beCalledInfo = null;
+            beCalling = false;
+        })
+        function resetWhenHangup() {
+            // 被叫信息
+            beCalledInfo = null;
+            // 是否被叫中
+            beCalling = false;
+            // 呼叫类型
+            type = null;
+            // 是否正忙
+            busy = false;
+        }
         //挂断
         $("#hangup").on('click', function () {
             netcall.hangup();
@@ -667,6 +688,13 @@
                 console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
                 pushMsg(msg);
             }
+        })
+
+        $("#disconnect").on('click', function () {
+            nim.disconnect();
+        })
+        $("#connect").on('click', function () {
+            nim.connect();
         })
 
     </script>
