@@ -30,6 +30,7 @@
         //uid = account.toLocaleLowerCase(),
         pwd = $("#token").val(),
         password = MD5(pwd);
+        //password = pwd;
         setCookie('uid', accout);
         setCookie('token', password);
         window.location.href='index.html'

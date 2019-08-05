@@ -5,28 +5,126 @@
     <meta charset="UTF-8">
     <title>wangyi</title>
     <style>
-        *{margin:0;padding:0;}
-        .box{width:100%; height:100%;position:fixed;display: flex;}
-        .box>div:nth-child(1){flex: 2.5;display: flex;flex-direction: column;}
-        .box>div:nth-child(2){flex: 1;display: flex;flex-direction: column;}
-        .box>div:nth-child(1)>div:nth-child(1){flex: 8;background-color: #ccc;}
-        .box>div:nth-child(1)>div:nth-child(2){flex: 1;background-color: white;line-height: 80px;text-indent: 20px;}
-        #container1{flex: 0.7;background-color: black;color:white;}
-        #remoteContainer1{flex: 1;background-color:#063;color:white;}
-        #msg{width:500px;height: 30px;text-indent: 20px;}
-        #sessionid{width:500px;height: 30px;text-indent: 20px;}
-        #callee{width:500px;height: 30px;text-indent: 20px;}
-        #sendmsg{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
-        #call{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
-        #response{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
-        #hangup{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
-        #reject{width:100px;height: 33px;background-color: #197ED8;color:white;border:none;cursor: pointer;vertical-align: middle;}
+        * {
+            margin: 0;
+            padding: 0;
+        }
 
+        .box {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            display: flex;
+        }
+
+        .box>div:nth-child(1) {
+            flex: 2.5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box>div:nth-child(2) {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box>div:nth-child(1)>div:nth-child(1) {
+            flex: 8;
+            background-color: #ccc;
+        }
+
+        .box>div:nth-child(1)>div:nth-child(2) {
+            flex: 1;
+            background-color: white;
+            line-height: 80px;
+            text-indent: 20px;
+        }
+
+        #container1 {
+            flex: 0.7;
+            background-color: black;
+            color: white;
+        }
+
+        #remoteContainer1 {
+            flex: 1;
+            background-color: #063;
+            color: white;
+        }
+
+        #msg {
+            width: 500px;
+            height: 30px;
+            text-indent: 20px;
+        }
+
+        #sessionid {
+            width: 500px;
+            height: 30px;
+            text-indent: 20px;
+        }
+
+        #callee {
+            width: 500px;
+            height: 30px;
+            text-indent: 20px;
+        }
+
+        #sendmsg {
+            width: 100px;
+            height: 33px;
+            background-color: #197ED8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        #call {
+            width: 100px;
+            height: 33px;
+            background-color: #197ED8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        #response {
+            width: 100px;
+            height: 33px;
+            background-color: #197ED8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        #hangup {
+            width: 100px;
+            height: 33px;
+            background-color: #197ED8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        #reject {
+            width: 100px;
+            height: 33px;
+            background-color: #197ED8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
     </style>
     <script></script>
     <script src="../js/jquery-1.11.3.min.js"></script>
-    <script src="../js/NIM_Web_NIM_v5.8.0.js"></script>
-    <script src="../js/NIM_Web_WebRTC_v5.8.0.js"></script>
+    <script src="../js/NIM_Web_NIM_v6.7.0.js"></script>
+    <script src="../js/NIM_Web_WebRTC_v6.7.0.js"></script>
     <script src="../js/md5.js"></script>
     <script src="../js/util.js"></script>
 </head>
@@ -38,7 +136,16 @@
             <div>
                 <input type="text" value="" id="msg" placeholder="消息内容">
                 <input type="text" value="" placeholder="发送对象" id="sessionid">
+                <div class="chat-editor box-sizing" id="chatEditor" data-disabled="1">
+                    <span class="chat-btn msg-type" id="chooseFileBtn">
+                        <a class="icon icon-file" data-type="file"></a>
+                    </span>
+                    <form action="#" id="uploadForm">
+                        <input multiple="multiple" type="file" name="file" id="uploadFile" class="hide" />
+                    </form>
+                </div>
                 <button id="sendmsg">发送消息</button>
+                <button id="resend">重发消息</button>
             </div>
             <div id="netcall">音视频</div>
             <div>
@@ -46,18 +153,24 @@
                 <button id="response">接听</button>
                 <button id="reject">拒绝</button>
                 <button id="hangup">挂断</button>
-                <!-- <button id="connect">连接</button> -->
-                <!-- <button id="disconnect">断开连接</button> -->
+                <button id="connect">连接</button>
+                <button id="disconnect">断开连接</button>
+                <button id="record">录制</button>
+                <button id="stoprecord">停止录制</button>
+                <button id="download">下载</button>
+                <button id="stoprecord1">获取反垃圾词库</button>
+                <button id="getsession">获取会话</button>
             </div>
         </div>
         <div>
-            <div id="container1">本地视频画面</div>
             <div id="remoteContainer1">对方视频画面</div>
+            <div id="container1">本地视频画面</div>
         </div>
     </div>
 
 
     <script>
+        let rid = null;
         // 被叫信息
         let beCalledInfo = null;
         // 是否被叫中
@@ -77,8 +190,14 @@
         var nim = NIM.getInstance({
             debug: true,
             appKey: '45c6af3c98409b18a84451215d0bdd6e',
+            // socketUrl: '10.173.38.38:18012',
+            // privateConf: {
+            // nos_uploader_web:'http://10.173.38.38:18013',//设置文件上传代理地址
+            // nos_downloader:'http://10.173.38.38:18014'//设置文件下载代理地址
+            // },
             account: userUID,
             token: sdktoken,
+            //transports: ['xhr-polling'],
             db: false,//不使用数据库
             onconnect: onConnect,
             onerror: onError,
@@ -140,12 +259,18 @@
 
             NIM.use(WebRTC);
             Netcall = WebRTC;
-            netcall = Netcall.getInstance({
+            netcall = WebRTC.getInstance({
                 debug: true,
                 nim: window.nim,
                 container: document.getElementById('container1'),
-                remoteContainer: document.getElementById("remoteContainer1")
+                remoteContainer: document.getElementById("remoteContainer1"),
+                //chromeId: 'knlopadnoicanccjaocbhhimkimkgjkb'
             })
+            // netcall.setIsPrivateDeployment(true)
+            // netcall.setPrivateDeploymentConf({
+            //     wssServer: 'nihao.netease.com',
+            //     turnServer: '10.173.38.38:3478'
+            // })
             netcall.on('devices', function (obj) {
                 console.log('on devices', obj)
             })
@@ -190,7 +315,10 @@
                 type = obj.type;
                 console.log('on callAccepted', obj);
                 netcall.startRtc().then(function () {
+                    // 开启麦克风
                     netcall.startDevice({
+                        width: 640,
+                        height: 480,
                         type: Netcall.DEVICE_TYPE_VIDEO,
                     }).then(function () {
                         console.log('启动摄像头成功，可以进行预览啦')
@@ -205,9 +333,9 @@
                         netcall.startLocalStream(node)
                         // 设置本地预览画面大小
                         netcall.setVideoViewSize({
-                            width: 500,
-                            height: 500,
-                            cut: true
+                            width: 640,
+                            height: 480,
+                            cut: false
                         })
                     }).catch(function (err) {
                         console.log('启动摄像头失败', err)
@@ -235,6 +363,18 @@
                         console.log(err)
                         netcall.hangup()
                     })
+
+                // netcall.startDevice({
+                //     type: Netcall.DEVICE_TYPE_DESKTOP_CHROME_SCREEN
+                // }).catch(function (err) {
+                //     if (error.code === 404) {
+                //         console.log('未安装插件')
+                //     } else if (error.code === 20) {
+                //         console.log('未获取到流', err)
+                //     } else {
+                //         console.log('启动屏幕共享失败', err)
+                //     }
+                // })
             });
             //收到远端数据回调
             netcall.on('remoteTrack', function (obj) {
@@ -250,14 +390,14 @@
                 //netcall.setPlayVolume(0)
                 netcall.startRemoteStream({
                     account: obj.account,
-                    node: document.getElementById('remoteContainer1')
+                    node: document.getElementById('remoteContainer1'),
                 })
                 // 设置对方预览画面大小
                 netcall.setVideoViewRemoteSize({
                     account: obj.account,
-                    width: 500,
-                    height: 500,
-                    cut: true
+                    width: 640,
+                    height: 480,
+                    cut: false
                 })
             })
             netcall.on('hangup', function (obj) {
@@ -510,7 +650,10 @@
                 alert("收到" + msg.type + "消息" + msg.text);
             } else if (msg.type == "file") {
                 alert("收到" + msg.type + "消息" + msg.file.url);
+            } else if (msg.type == "notification") {
+                alert("收到" + msg.type + "消息" + msg.attach);
             }
+
         }
         function onBroadcastMsg(msg) {
             console.log('收到广播消息', msg);
@@ -531,7 +674,7 @@
         }
         function onSysMsg(sysMsg) {
             console.log('收到系统通知', sysMsg)
-            pushSysMsgs(sysMsg);
+            //pushSysMsgs(sysMsg);
         }
         function onUpdateSysMsg(sysMsg) {
             pushSysMsgs(sysMsg);
@@ -574,10 +717,10 @@
                 custom: '测试自定义数据',//自定义呼叫拓展数据
                 pushPayload: '',//推送拓展字段
                 sound: '',//推送铃声设置
-                forceKeepCalling: 1//是否启用持续呼叫
+                //forceKeepCalling: 1//是否启用持续呼叫
             };
             const sessionConfig = {//通话参数定义
-                videoQuality: Netcall.CHAT_VIDEO_QUALITY_HIGH,//通话发送分辨率
+                videoQuality: Netcall.CHAT_VIDEO_QUALITY_NORMAL,//通话发送分辨率
                 videoFrameRate: Netcall.CHAT_VIDEO_FRAME_RATE_15,//通话发送帧率
                 videoBitrate: 0,//通话发送视频码率，0为默认由sdk定义
                 recordVideo: false,//是否开启服务端视频录制
@@ -598,15 +741,17 @@
                 })
                 .catch(function (err) {
                     // 被叫不在线
-                    if (err.event.code === 11001) {
+                    console.log('呼叫失败', err);
+                    if (err.event.event.code === 11001) {
                         console.log('callee offline', err);
+                        alert("对方离线");
                     }
                 });
         })
         //接听
         $("#response").on('click', function () {
             const sessionConfig = {//设置通话参数，同呼叫
-                videoQuality: Netcall.CHAT_VIDEO_QUALITY_HIGH,
+                videoQuality: Netcall.CHAT_VIDEO_QUALITY_NORMAL,
                 videoFrameRate: Netcall.CHAT_VIDEO_FRAME_RATE_15,
                 videoBitrate: 0,
                 recordVideo: false,
@@ -669,7 +814,7 @@
             // 是否正忙
             busy = false;
         }
-
+        var msg1 = null;
         //发送文本消息
         $("#sendmsg").on('click', function () {
             toaccid = $("#sessionid").val().trim();
@@ -687,6 +832,31 @@
                 console.log(msg);
                 console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
                 pushMsg(msg);
+                nim.deleteMsg({
+                    msg: msg,
+                    done: deleteMsgDone
+                })
+                console.log('正在撤回消息', someMsg)
+                function deleteMsgDone(error) {
+                    console.log('撤回消息' + (!error ? '成功' : '失败'), error);
+                }
+                msg1 = msg;
+            }
+        })
+        //重发文本消息
+        $("#resend").on('click', function () {
+            toaccid = $("#sessionid").val().trim();
+            message = $("#msg").val().trim();
+            nim.resendMsg({
+                msg: msg1,
+                done: sendMsgDone
+            })
+            console.log('正在重发消息', msg1)
+            function sendMsgDone(error, msg) {
+                console.log(error);
+                console.log(msg);
+                console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
+                pushMsg(msg);
             }
         })
 
@@ -695,6 +865,130 @@
         })
         $("#connect").on('click', function () {
             nim.connect();
+        })
+        $("#record").on('click', function () {
+            callee = $.trim($("#callee").val())
+            netcall.startRecordMp4(
+                callee
+            ).then(function (obj) {
+                console.log('startRecordMp4 通知下发为正式录制', obj);
+                rid = obj.recordId
+            })
+
+        })
+        $("#stoprecord").on('click', function () {
+            netcall.stopRecordMp4().then(function (obj) {
+                //console.log('stopRecordMp4 通知下发为录制结束', obj)
+            })
+        })
+        //下载
+        $("#download").on('click', function () {
+            netcall.downloadMediaRecording({
+                recordId: rid // 这里的值就是前面接口获取的录制列表的key
+            }).then(function (obj) {
+                console.log('下载结果', obj);
+            })
+        })
+
+        $("#stoprecord1").on('click', function () {
+            // 获取反垃圾词库
+            nim.getClientAntispamLexicon({
+                done: function (error, file) {
+                    console.log(error, file)
+                }
+            });
+        })
+        $fileInput = $('#uploadFile');
+        $("#chooseFileBtn").on('click', function () {
+            $('#uploadFile').click();
+        })
+        $("#uploadFile").on('click', function () {
+            toaccid = $("#sessionid").val().trim();
+            fileInput = $fileInput.get(0);
+            nim.sendFile({
+                scene: 'p2p',
+                to: toaccid,
+                type: 'video',
+                fileInput: fileInput,
+                beginupload: function (upload) {
+                    // - 如果开发者传入 fileInput, 在此回调之前不能修改 fileInput
+                    // - 在此回调之后可以取消图片上传, 此回调会接收一个参数 `upload`, 调用 `upload.abort();` 来取消文件上传
+                },
+                uploadprogress: function (obj) {
+                    console.log('文件总大小: ' + obj.total + 'bytes');
+                    console.log('已经上传的大小: ' + obj.loaded + 'bytes');
+                    console.log('上传进度: ' + obj.percentage);
+                    console.log('上传进度文本: ' + obj.percentageText);
+                },
+                uploaddone: function (error, file) {
+                    console.log(error);
+                    console.log(file);
+                    console.log('上传' + (!error ? '成功' : '失败'));
+                },
+                beforesend: function (msg) {
+                    console.log('正在发送p2p image消息, id=' + msg.idClient);
+                    pushMsg(msg);
+                },
+                done: sendMsgDone
+            });
+            function sendMsgDone(error, msg) {
+                console.log(error);
+                console.log(msg);
+                console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
+                pushMsg(msg);
+            }
+        })
+        $("#uploadFile").on('change', function () {
+            toaccid = $("#sessionid").val().trim();
+            fileInput = $fileInput.get(0);
+            nim.sendFile({
+                scene: 'p2p',
+                to: toaccid,
+                type: 'file',
+                fileInput: fileInput,
+                beginupload: function (upload) {
+                    // - 如果开发者传入 fileInput, 在此回调之前不能修改 fileInput
+                    // - 在此回调之后可以取消图片上传, 此回调会接收一个参数 `upload`, 调用 `upload.abort();` 来取消文件上传
+                },
+                uploadprogress: function (obj) {
+                    console.log('文件总大小: ' + obj.total + 'bytes');
+                    console.log('已经上传的大小: ' + obj.loaded + 'bytes');
+                    console.log('上传进度: ' + obj.percentage);
+                    console.log('上传进度文本: ' + obj.percentageText);
+                },
+                uploaddone: function (error, file) {
+                    console.log(error);
+                    console.log(file);
+                    console.log('上传' + (!error ? '成功' : '失败'));
+                },
+                beforesend: function (msg) {
+                    console.log('正在发送p2p image消息, id=' + msg.idClient);
+                    pushMsg(msg);
+                },
+                done: sendMsgDone
+            });
+            function sendMsgDone(error, msg) {
+                console.log(error);
+                console.log(msg);
+                console.log('发送' + msg.scene + ' ' + msg.type + '消息' + (!error ? '成功' : '失败') + ', id=' + msg.idClient);
+                pushMsg(msg);
+            }
+        })
+        $("#getsession").on('click', function () {
+            // 获取反垃圾词库
+            nim.getLocalSessions({
+                //lastSessionId: lastSessionId,
+                limit: 100,
+                done: getLocalSessionsDone
+            });
+            function getLocalSessionsDone(error, obj) {
+                console.log(error);
+                console.log(obj);
+                console.log('获取本地会话列表' + (!error ? '成功' : '失败'));
+                if (!error) {
+                    onSessions(obj.sessions);
+                }
+            }
         })
 
     </script>
