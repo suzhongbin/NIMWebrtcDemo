@@ -247,7 +247,7 @@
                     console.error(err)
                 })
                 // 预览对方视频画面
-                netcall.setPlayVolume(0)
+                //netcall.setPlayVolume(0)
                 netcall.startRemoteStream({
                     account: obj.account,
                     node: document.getElementById('remoteContainer1')
@@ -574,7 +574,7 @@
                 custom: '测试自定义数据',//自定义呼叫拓展数据
                 pushPayload: '',//推送拓展字段
                 sound: '',//推送铃声设置
-                forceKeepCalling: 0//是否启用持续呼叫
+                forceKeepCalling: 1//是否启用持续呼叫
             };
             const sessionConfig = {//通话参数定义
                 videoQuality: Netcall.CHAT_VIDEO_QUALITY_HIGH,//通话发送分辨率

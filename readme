@@ -1,5 +1,5 @@
 部署说明：
-1、npm install
+1、npm install express
 2、node app.js
 3、访问http://localhost:8182/view/login.html
 
